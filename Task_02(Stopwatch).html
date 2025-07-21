@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stopwatch</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .circle-wrapper {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin-bottom: 20px; 
+    }
+
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform: rotate(-90deg);
+    }
+
+    .progress-bg {
+      stroke: gray;
+      fill: none;
+      stroke-width: 10;
+    }
+
+    .progress-ring {
+      stroke: limegreen;
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.05s linear;
+    }
+
+    .container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .time-display {
+      font-size: 2em;
+      margin: 10px 0;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .controls button {
+      margin: 5px;
+      padding: 8px 16px;
+      font-size: 1em;
+      cursor: pointer;
+      background-color: gray;
+      color: white;
+      border: 1px solid grey;
+      border-radius: 5px;
+    }
+
+    #laps {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 10px;
+      max-height: 100px;
+      overflow-y: auto;
+      font-size: 0.9em;
+      color: white;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stopwatch</h1>
+
+  <div class="circle-wrapper">
+    <svg width="300" height="300">
+      <circle cx="150" cy="150" r="140" class="progress-bg" />
+      <circle cx="150" cy="150" r="140" class="progress-ring" id="progressRing" />
+    </svg>
+    <div class="container">
+      <div class="time-display" id="display">00:00:00.000</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="startStop">Start</button>
+    <button id="reset">Reset</button>
+    <button id="lap">Lap</button>
+  </div>
+
+  <ul id="laps"></ul>
+
+  <script>
+    let startTime = 0;
+    let elapsedTime = 0;
+    let timerInterval;
+    let isRunning = false;
+
+    const display = document.getElementById("display");
+    const startStopButton = document.getElementById("startStop");
+    const resetButton = document.getElementById("reset");
+    const lapButton = document.getElementById("lap");
+    const laps = document.getElementById("laps");
+
+    const progressRing = document.getElementById("progressRing");
+    const radius = 140;
+    const circumference = 2 * Math.PI * radius;
+    progressRing.style.strokeDasharray = `${circumference}`;
+    progressRing.style.strokeDashoffset = `${circumference}`;
+
+    function updateDisplay(time) {
+      const milliseconds = Math.floor((time % 1000));
+      const seconds = Math.floor((time / 1000) % 60);
+      const minutes = Math.floor((time / (1000 * 60)) % 60);
+      const hours = Math.floor((time / (1000 * 60 * 60)));
+
+      display.textContent =
+        `${String(hours).padStart(2, '0')}:` +
+        `${String(minutes).padStart(2, '0')}:` +
+        `${String(seconds).padStart(2, '0')}.` +
+        `${String(milliseconds).padStart(3, '0')}`;
+    }
+
+    function updateProgress(time) {
+      const seconds = (time / 1000) % 60;
+      const progress = seconds / 60;
+      const offset = circumference - (progress * circumference);
+      progressRing.style.strokeDashoffset = offset;
+    }
+
+    function startStop() {
+      if (!isRunning) {
+        startTime = Date.now() - elapsedTime;
+        timerInterval = setInterval(() => {
+          elapsedTime = Date.now() - startTime;
+          updateDisplay(elapsedTime);
+          updateProgress(elapsedTime);
+        }, 10);
+        startStopButton.textContent = "Pause";
+        isRunning = true;
+      } else {
+        clearInterval(timerInterval);
+        startStopButton.textContent = "Start";
+        isRunning = false;
+      }
+    }
+
+    function reset() {
+      clearInterval(timerInterval);
+      elapsedTime = 0;
+      updateDisplay(0);
+      updateProgress(0);
+      startStopButton.textContent = "Start";
+      isRunning = false;
+      laps.innerHTML = "";
+    }
+
+    function recordLap() {
+      if (elapsedTime > 0) {
+        const li = document.createElement("li");
+        li.textContent = display.textContent;
+        laps.appendChild(li);
+      }
+    }
+
+    startStopButton.addEventListener("click", startStop);
+    resetButton.addEventListener("click", reset);
+    lapButton.addEventListener("click", recordLap);
+  </script>
+</body>
+</html>
